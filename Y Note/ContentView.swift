@@ -6,6 +6,7 @@
 import SwiftUI
 import SwiftData
 
+// MARK: - Note Model
 @Model
 class Note {
     var id: UUID
@@ -21,21 +22,28 @@ class Note {
     }
 }
 
+// MARK: - ContentView
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
-
+    @Query(sort: \Note.createdAt, order: .reverse) private var notes: [Note]
+    
     var body: some View {
         NavigationSplitView {
             List {
-                ForEach(items) { item in
+                ForEach(notes) { note in
                     NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
+                        NoteDetailView(note: note)
                     } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+                        VStack(alignment: .leading) {
+                            Text(note.title.isEmpty ? "Untitled Note" : note.title)
+                                .font(.headline)
+                            Text(note.content)
+                                .lineLimit(1)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
-                .onDelete(perform: deleteItems)
+                .onDelete(perform: deleteNotes)
             }
 #if os(macOS)
             .navigationSplitViewColumnWidth(min: 180, ideal: 200)
@@ -47,33 +55,56 @@ struct ContentView: View {
                 }
 #endif
                 ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
+                    Button(action: addNote) {
+                        Label("New Note", systemImage: "plus")
                     }
                 }
             }
         } detail: {
-            Text("Select an item")
+            Text("Select a note")
+                .foregroundColor(.secondary)
         }
     }
-
-    private func addItem() {
+    
+    // MARK: - Functions
+    private func addNote() {
         withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
+            let newNote = Note(title: "New Note", content: "")
+            modelContext.insert(newNote)
         }
     }
-
-    private func deleteItems(offsets: IndexSet) {
+    
+    private func deleteNotes(offsets: IndexSet) {
         withAnimation {
             for index in offsets {
-                modelContext.delete(items[index])
+                modelContext.delete(notes[index])
             }
         }
     }
 }
 
+// MARK: - Note Detail View
+struct NoteDetailView: View {
+    @Bindable var note: Note
+    
+    var body: some View {
+        VStack(alignment: .leading) {
+            TextField("Title", text: $note.title)
+                .font(.title)
+                .padding(.bottom, 4)
+            
+            Divider()
+            
+            TextEditor(text: $note.content)
+                .padding(.top, 4)
+        }
+        .padding()
+        .navigationTitle(note.title.isEmpty ? "Untitled Note" : note.title)
+    }
+}
+
+// MARK: - Preview
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .modelContainer(for: Note.self, inMemory: true)
 }

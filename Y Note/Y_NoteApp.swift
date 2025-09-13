@@ -25,6 +25,6 @@ struct Y_NoteApp: App {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(sharedModelContainer)
+        .modelContainer(for: Note.self)
     }
 }

@@ -2,11 +2,24 @@
 //  ContentView.swift
 //  Y Note
 //
-//  Created by Chitose on 9/13/25.
-//
 
 import SwiftUI
 import SwiftData
+
+@Model
+class Note {
+    var id: UUID
+    var title: String
+    var content: String
+    var createdAt: Date
+    
+    init(title: String, content: String, createdAt: Date = Date()) {
+        self.id = UUID()
+        self.title = title
+        self.content = content
+        self.createdAt = createdAt
+    }
+}
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
